@@ -21,19 +21,17 @@ void print_matrix(const vector<vector<double>>& matrix, int n)
     cout << endl << endl;
 }
 
-void print_matrix(const vector<vector<int>>& matrix, int n)
+void print_vector(const vector<double>& matrix, int n)
 {
     for (int i = 0; i < n; i++)
     {
-        cout << "[" << matrix[i][0];
-        for (int j = 1; j < n; j++)
-        {
-            cout << ", " << matrix[i][j];
-        }
+        cout << "[";
+        cout << matrix[i];
         cout << "]" << endl;
     }
-    cout << endl << endl;
+    cout << endl;
 }
+
 
 void hand_fill(vector<vector<double>> &matrtix, int n) 
 {
@@ -41,43 +39,35 @@ void hand_fill(vector<vector<double>> &matrtix, int n)
     {
         for (int j = 0; j < n; j++) 
         {
-            cout << "Enter " << i + 1 << ", " << j + 1 << " element\n";
+            cout << "Enter " << i + 1 << ", " << j + 1 << " coefficient\n";
             cin >> matrtix[i][j];
         }
     }
-    cout << "\nEntered matrix\n";
+    cout << "\nEntered matrix of coefficients\n";
     print_matrix(matrtix, n);
 }
 
-void random_fill(vector<vector<double>>& matrix, int n) 
+void hand_fill(vector<double>& matrtix, int n)
 {
-    srand(time(NULL));
-    for (int i = 0; i < n; i++) 
+    for (int i = 0; i < n; i++)
     {
-        for (int j = 0; j < n; j++) 
-        {
-            matrix[i][j] = rand() % 100 + 1;
-        }
+        cout << "Enter " << i + 1 << " b element\n";
+        cin >> matrtix[i];
     }
-    cout << "Random matrix\n";
-    print_matrix(matrix, n);
+    cout << "\nEntered b vector\n";
+    print_vector(matrtix, n);
 }
 
-void LUP_decompos(const vector<vector<double>>& matrix, vector<vector<double>> &lmatrix, vector<vector<double>>& umatrix, vector<vector<int>>& pmatrix, int n)
+void LU_decompos(const vector<vector<double>>& matrix, vector<vector<double>>& lmatrix, vector<vector<double>>& umatrix, int n)
 {
     for (int i = 0; i < n; i++)
     {
-        pmatrix[i][i] = 1;
-    }
-
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n; j++) 
+        for (int j = 0; j < n; j++)
         {
-            if (i >= j) 
+            if (i >= j)
             {
-                int sum = 0;
-                for (int k = 0; k < j; k++) 
+                double sum = 0;
+                for (int k = 0; k < j; k++)
                 {
                     sum += lmatrix[i][k] * umatrix[k][j];
                 }
@@ -87,9 +77,9 @@ void LUP_decompos(const vector<vector<double>>& matrix, vector<vector<double>> &
                     umatrix[i][j] = 1;
                 }
             }
-            else 
+            else
             {
-                int sum = 0;
+                double sum = 0;
                 for (int k = 0; k < i; k++)
                 {
                     sum += umatrix[i][k] * umatrix[k][j];
@@ -98,93 +88,60 @@ void LUP_decompos(const vector<vector<double>>& matrix, vector<vector<double>> &
             }
         }
     }
+}
 
-    for (int i = 0; i < n; i++)
+vector<double> LU_linear(const vector<vector<double>> L, const vector<vector<double>> U, const vector<double> b, int n) 
+{
+    vector<double> x(n, 0);
+    vector<double> y(n, 0);
+
+    y[0] = b[0] / L[0][0];
+    for (int i = 1; i < n; i++) 
     {
-        int max_index = i;
-        for (int j = i + 1; j < n; j++)
+        double sum = 0;
+        for (int k = 0; k < i; k++)
         {
-            if (abs(matrix[j][i]) > abs(matrix[max_index][i]))
-            {
-                max_index = j;
-            }
+            sum += L[i][k] * y[k];
         }
-        if (max_index != i)
-        {
-            swap(pmatrix[i], pmatrix[max_index]);
-        }
+        y[i] = (b[i] - sum) / L[i][i];
     }
+
+    x[n - 1] = y[n - 1];
+    for (int i = n - 2; i >= 0; i--) 
+    {
+        double sum = 0;
+        for (int k = i + 1; k < n; k++)
+        {
+            sum += U[i][k] * x[k];
+        }
+        x[i] = y[i] - sum;
+    }
+
+    return x;
 }
 
 int main()
 {
     int n;
-    cout << "Enter size of the matrix:\n";
+    cout << "Enter number of x:\n";
     cin >> n;
+
     vector<vector<double>> matrix (n, vector<double>(n, 0));
-    while(true) 
-    {
-        int choose = 0;
-        cout << "Choose the way to fill matrix (1 - by hand, 2 - random):\n";
-        cin >> choose;
-        if (choose == 1) 
-        {
-            hand_fill(matrix, n);
-            break;
-        }
-        if (choose == 2) 
-        {
-            random_fill(matrix, n);
-            break;
-        }
-    }
+    vector<double> b(n, 0);
+
+    hand_fill(matrix, n);
+    hand_fill(b, n);
+
     vector<vector<double>> lmatrix(n, vector<double>(n, 0));
     vector<vector<double>> umatrix(n, vector<double>(n, 0));
-    vector<vector<int>> pmatrix(n, vector<int>(n, 0));
 
-    LUP_decompos(matrix, lmatrix, umatrix, pmatrix, n);
+    LU_decompos(matrix, lmatrix, umatrix, n);
 
-    cout << "L\n";
-    print_matrix(lmatrix, n);
-    cout << "U\n";
-    print_matrix(umatrix, n);
-    cout << "P\n";
-    print_matrix(pmatrix, n);
+    vector<double> x;
+    x = LU_linear(lmatrix, umatrix, b, n);
+    cout << "X vector\n";
+    print_vector(x, n);
 
     system("pause");
 }
-
-
-
-//void LU_decompos(const vector<vector<double>>& matrix, vector<vector<double>>& lmatrix, vector<vector<double>>& umatrix, int n)
-//{
-//    for (int i = 0; i < n; i++)
-//    {
-//        for (int j = 0; j < n; j++)
-//        {
-//            if (i >= j)
-//            {
-//                int sum = 0;
-//                for (int k = 0; k < j; k++)
-//                {
-//                    sum += lmatrix[i][k] * umatrix[k][j];
-//                }
-//                lmatrix[i][j] = matrix[i][j] - sum;
-//                if (i == j)
-//                {
-//                    umatrix[i][j] = 1;
-//                }
-//            }
-//            else
-//            {
-//                int sum = 0;
-//                for (int k = 0; k < i; k++)
-//                {
-//                    sum += umatrix[i][k] * umatrix[k][j];
-//                }
-//                umatrix[i][j] = (matrix[i][j] - sum) / lmatrix[i][i];
-//            }
-//        }
-//    }
-//}
 
