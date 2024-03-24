@@ -76,7 +76,7 @@ void LUP_decompos(const vector<vector<double>>& matrix, vector<vector<double>> &
         {
             if (i >= j) 
             {
-                int sum = 0;
+                double sum = 0;
                 for (int k = 0; k < j; k++) 
                 {
                     sum += lmatrix[i][k] * umatrix[k][j];
@@ -89,7 +89,7 @@ void LUP_decompos(const vector<vector<double>>& matrix, vector<vector<double>> &
             }
             else 
             {
-                int sum = 0;
+                double sum = 0;
                 for (int k = 0; k < i; k++)
                 {
                     sum += umatrix[i][k] * umatrix[k][j];
